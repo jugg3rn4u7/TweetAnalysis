@@ -1,4 +1,5 @@
 require 'sad_panda'
+require 'madeleine'
 class TweetController < ApplicationController
   skip_before_action :verify_authenticity_token
   def index
@@ -11,7 +12,8 @@ class TweetController < ApplicationController
   def addKeyword
     begin
     	@keyword = params['keyword']
-    	Keyword.create(name: @keyword)
+      @party = params['party']
+    	Keyword.create(name: @keyword, party: @party)
     	render :nothing => true, :status => 200
     rescue Exception => e
       puts e.message
@@ -39,7 +41,7 @@ class TweetController < ApplicationController
           dup_text = tweet.text.dup
           sentiment = SadPanda.emotion(dup_text)
           score = SadPanda.polarity(dup_text)
-          Tweet.create(text: tweet.text, screen_name: tweet.user.screen_name, keyword_id: keyword.id, score: score, sentiment: sentiment)
+          Tweet.create(text: tweet.text, screen_name: tweet.user.screen_name, keyword_id: keyword.id, score: score, sentiment: sentiment, user_id: tweet.user.id, political_affiliation: keyword.party)
         end
         @tweets.concat(@temp) 
       end 
@@ -81,18 +83,42 @@ class TweetController < ApplicationController
   end
   def getKeywords
     begin
-      @keywords = Keyword.all
+      @keywords = Keyword.find_by! party: params['party']
       render :json => @keywords.to_json, :status => 200 
     rescue Exception => e
       puts e.message
       render :nothing => true, :status => 500
     end
   end
+  def showKeywordsByParty
+    party = params['party']
+  end
   def getDimensions
     begin
       client = Mysql2::Client.new(:host => "localhost", :database => "TweetAnalysis_development", :username => "root", :password => "root")
       @result = client.query("select distinct sentiment as dimension from tweets;")
       render :json => @result.to_json, :status => 200
+    rescue Exception => e
+      puts e.message
+      render :nothing => true, :status => 500
+    end
+  end
+  def train_classifier
+    begin    
+      @m = SnapshotMadeleine.new("bayes_data") {
+          Classifier::Bayes.new 'Democratic', 'Republican'
+      }
+      @tweets = Tweet.all
+      @tweets.each do |tweet|
+        if tweet.party == 1
+           @m.system.train_democratic tweet.text
+        elsif tweet.party == 2
+           @m.system.train_republican tweet.text
+        end
+      end  
+      @m.take_snapshot
+      @m.system.classify "I love Hillary"
+      render :nothing => true, :status => 200
     rescue Exception => e
       puts e.message
       render :nothing => true, :status => 500

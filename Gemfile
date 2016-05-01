@@ -12,6 +12,9 @@ gem "less-rails"
 gem "twitter-bootstrap-rails"
 gem 'twitter'
 gem 'sad_panda'
+gem 'classifier', '~> 1.3', '>= 1.3.4'
+gem 'madeleine', '~> 0.9.0'
+gem 'fast-stemmer'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'

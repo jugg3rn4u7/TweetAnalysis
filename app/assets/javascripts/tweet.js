@@ -2,7 +2,8 @@
 // All this logic will automatically be available in application.js.
 
 $(document).on("click", "#add_keyword", function () {
-	$.post("tweet/addKeyword?_ts="+(new Date().getTime()), { keyword: $("#new-keyword").val() }, function (response) {
+	var party = $("input[name=party]:checked").val()
+	$.post("tweet/addKeyword?party="+ party +"&_ts="+(new Date().getTime()), { keyword: $("#new-keyword").val() }, function (response) {
 		window.location = "/";
 	});
 });
@@ -186,9 +187,12 @@ $(document).on("click", "#analyze", function () {
 	    }
 	});
 
-	function getKeywords($deferred1) {
+});
+
+var getKeywords = function ($deferred1) {
+		var party = $("input[name=party]:checked").val();
 		$.ajax({
-		    url: "tweet/getKeywords?_ts="+(new Date().getTime()),
+		    url: "tweet/getKeywords?party="+party+"&_ts="+(new Date().getTime()),
 		    type: 'GET',
 		    success: function(xhr) {
 		    	var keywords = [];
@@ -204,9 +208,9 @@ $(document).on("click", "#analyze", function () {
 		});
 
 		return $deferred1.promise();
-	}
+}
 
-	function getDimensions($deferred2) {
+var getDimensions =	function ($deferred2) {
 		$.ajax({
 		    url: "tweet/getDimensions?_ts="+(new Date().getTime()),
 		    type: 'GET',
@@ -223,6 +227,55 @@ $(document).on("click", "#analyze", function () {
 		    }
 		});
 
-		return $deferred2.promise();
-	}
+	return $deferred2.promise();
+}
+
+$(document).on("click", "#democratic_party", function() {
+	clearKeywords()
+	getMainKeywords();
+});
+
+$(document).on("click", "#republican_party", function() {
+	clearKeywords();
+	getMainKeywords();
+});
+
+var clearKeywords = function () {
+	$("#keyword-list").html("");
+}
+
+var getMainKeywords = function() {
+	var party = $("input[name=party]:checked").val();
+		$.ajax({
+		    url: "tweet/getKeywords?party="+party+"&_ts="+(new Date().getTime()),
+		    type: 'GET',
+		    success: function(xhr) {
+		    	$("#status").removeClass().addClass("label label-success");
+				$("#status").html("Success");
+		    },
+		    failure: function(error) {
+		    	$("#status").removeClass().addClass("label label-success");
+				$("#status").html("No Keywords");
+		    }
+		});	
+}
+
+$("#train").on("click", function() {
+
+	$.ajax({
+		url: "tweet/train_classifier?_ts="+(new Date().getTime()),
+		type: 'GET',
+		beforeSend: function( xhr ) {
+	    	$("#status").removeClass().addClass("label label-default");
+	    	$("#status").html("Training Classifier...");
+		},
+	    success: function(xhr) {
+		   	$("#status").removeClass().addClass("label label-success");
+			$("#status").html("Success");
+		},
+	    failure: function(xhr) {
+	    	$("#status").removeClass().addClass("label label-danger");
+	    	$("#status").html("Failed");
+	    }
+	});
 });
