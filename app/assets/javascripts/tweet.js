@@ -187,17 +187,21 @@ $(document).on("click", "#analyze", function () {
 	    }
 	});
 
-});
-
-var getKeywords = function ($deferred1) {
+	var getKeywords = function ($deferred1) {
 		var party = $("input[name=party]:checked").val();
 		$.ajax({
 		    url: "tweet/getKeywords?party="+party+"&_ts="+(new Date().getTime()),
 		    type: 'GET',
 		    success: function(xhr) {
 		    	var keywords = [];
-		    	for (var i = 0; i < xhr.length; i++) {
-		    		keywords.push(xhr[i]["name"]);
+		    	var data;
+		    	if(typeof xhr == "object") {
+		    		data = [].concat(xhr);
+		    	} else {
+		    		data = xhr;
+		    	}
+		    	for (var i = 0; i < data.length; i++) {
+		    		keywords.push(data[i]["name"]);
 		    	}
 
 				$deferred1.resolve(keywords);
@@ -208,16 +212,22 @@ var getKeywords = function ($deferred1) {
 		});
 
 		return $deferred1.promise();
-}
+	}
 
-var getDimensions =	function ($deferred2) {
+	var getDimensions =	function ($deferred2) {
 		$.ajax({
 		    url: "tweet/getDimensions?_ts="+(new Date().getTime()),
 		    type: 'GET',
 		    success: function(xhr) {
 		    	var dimensions = [];
-		    	for (var i = 0; i < xhr.length; i++) {
-		    		dimensions.push(xhr[i]["dimension"]);
+		    	var data;
+		    	if(typeof xhr == "object") {
+		    		data = [].concat(xhr);
+		    	} else {
+		    		data = xhr;
+		    	}
+		    	for (var i = 0; i < data.length; i++) {
+		    		dimensions.push(data[i]["dimension"]);
 		    	}
 
 				$deferred2.resolve(dimensions);
@@ -227,8 +237,10 @@ var getDimensions =	function ($deferred2) {
 		    }
 		});
 
-	return $deferred2.promise();
-}
+		return $deferred2.promise();
+	}
+
+});
 
 $(document).on("click", "#democratic_party", function() {
 	clearKeywords()
@@ -249,7 +261,18 @@ var getMainKeywords = function() {
 		$.ajax({
 		    url: "tweet/getKeywords?party="+party+"&_ts="+(new Date().getTime()),
 		    type: 'GET',
-		    success: function(xhr) {
+		    success: function(response) {
+		    	var data;
+		    	if(typeof response == "object") {
+		    		data = [].concat(response);
+		    	} else {
+		    		data = response;
+		    	}
+
+		    	for (var i = 0; i < data.length; i++) {
+		    		$("#keyword-list")
+		    		.append("<option value="+ data[i]["id"] +" class='list-group-item'>"+ data[i]["name"]+"</option>");						
+		    	}
 		    	$("#status").removeClass().addClass("label label-success");
 				$("#status").html("Success");
 		    },
@@ -260,7 +283,7 @@ var getMainKeywords = function() {
 		});	
 }
 
-$("#train").on("click", function() {
+$(document).on("click", "#train", function() {
 
 	$.ajax({
 		url: "tweet/train_classifier?_ts="+(new Date().getTime()),
@@ -278,4 +301,39 @@ $("#train").on("click", function() {
 	    	$("#status").html("Failed");
 	    }
 	});
+});
+
+$(document).on("click", "#test", function() {
+	var key = $("#test-key").val();
+	if(key == '' || key == null) {
+		alert("Please enter test keyword");
+		return;
+	}
+	var count = $("#test-count").val();
+	if(count == '' || count == null) {
+		count = 10;
+	}
+
+	$.ajax({
+		url: "tweet/test_classifier?_ts="+(new Date().getTime()),
+		type: 'POST',
+		data: { key: key, count: count },
+		beforeSend: function( xhr ) {
+	    	$("#status").removeClass().addClass("label label-default");
+	    	$("#status").html("Testing Classifier...");
+		},
+	    success: function(xhr) {
+		   	$("#status").removeClass().addClass("label label-success");
+			$("#status").html("Success");
+		},
+	    failure: function(xhr) {
+	    	$("#status").removeClass().addClass("label label-danger");
+	    	$("#status").html("Failed");
+	    }
+	});
+});
+
+$(document).on("click", "#flip", function() {
+	$("#chart").toggle();
+	$("#tabular-data").toggle();
 });

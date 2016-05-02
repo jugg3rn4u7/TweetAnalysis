@@ -2,9 +2,11 @@ require 'sad_panda'
 require 'madeleine'
 class TweetController < ApplicationController
   skip_before_action :verify_authenticity_token
+  @@m = SnapshotMadeleine.new("bayes_data") {
+          Classifier::Bayes.new 'Democratic', 'Republican'
+  }
   def index
     begin
-  	 @keywords = Keyword.all
     rescue Exception => e
       puts e.message
     end
@@ -105,20 +107,43 @@ class TweetController < ApplicationController
   end
   def train_classifier
     begin    
-      @m = SnapshotMadeleine.new("bayes_data") {
-          Classifier::Bayes.new 'Democratic', 'Republican'
-      }
       @tweets = Tweet.all
       @tweets.each do |tweet|
-        if tweet.party == 1
-           @m.system.train_democratic tweet.text
-        elsif tweet.party == 2
-           @m.system.train_republican tweet.text
+        if tweet.political_affiliation == 1
+           @@m.system.train_democratic tweet.text
+        elsif tweet.political_affiliation == 2
+           @@m.system.train_republican tweet.text
         end
       end  
-      @m.take_snapshot
-      @m.system.classify "I love Hillary"
+      @@m.take_snapshot
+      puts "Training Classifier Complete !"
       render :nothing => true, :status => 200
+    rescue Exception => e
+      puts e.message
+      render :nothing => true, :status => 500
+    end
+  end
+  def test_classifier
+    begin 
+    key = params['key']
+    count = params['count']
+    @tweets = $my_twitter.search("#{key} -rt", result_type: "recent", lang: 'en').take(count.to_i)
+    @tweets.each do |latest_tweet|
+      dup_text = latest_tweet.text.dup
+      t_party = @@m.system.classify dup_text
+      sentiment = SadPanda.emotion(dup_text)
+      score = SadPanda.polarity(dup_text)
+      if t_party == "Democratic"
+        party = 1
+      elsif t_party == "Republican"
+        party = 2
+      end
+      Tweet.create(text: dup_text, screen_name: latest_tweet.user.screen_name, 
+        score: score, sentiment: sentiment, user_id: latest_tweet.user.id, political_affiliation: party)
+      puts "screen_name : #{latest_tweet.user.screen_name} and party : #{party}"
+    end
+    puts "Testing Classifier Complete !"
+    render :nothing => true, :status => 200
     rescue Exception => e
       puts e.message
       render :nothing => true, :status => 500
