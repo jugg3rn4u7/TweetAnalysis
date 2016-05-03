@@ -85,15 +85,14 @@ class TweetController < ApplicationController
   end
   def getKeywords
     begin
-      @keywords = Keyword.find_by! party: params['party']
+      party = params['party']
+      client = Mysql2::Client.new(:host => "localhost", :database => "TweetAnalysis_development", :username => "root", :password => "root")
+      @keywords = client.query("select * from keywords where party=#{party}") 
       render :json => @keywords.to_json, :status => 200 
     rescue Exception => e
       puts e.message
       render :nothing => true, :status => 500
     end
-  end
-  def showKeywordsByParty
-    party = params['party']
   end
   def getDimensions
     begin
@@ -144,6 +143,36 @@ class TweetController < ApplicationController
     end
     puts "Testing Classifier Complete !"
     render :nothing => true, :status => 200
+    rescue Exception => e
+      puts e.message
+      render :nothing => true, :status => 500
+    end
+  end
+  def getDemocratsList
+    begin
+      @democrats = Tweet.select( "screen_name" ).where( political_affiliation: 1 ) 
+      puts "Get Democrats List Complete !"
+      render :json => @democrats.to_json, :status => 200 
+    rescue Exception => e
+      puts e.message
+      render :nothing => true, :status => 500
+    end
+  end
+  def getRepublicanList
+    begin
+      @republicans = Tweet.select( "screen_name" ).where( political_affiliation: 2 )
+      puts "Get Republicans List Complete !"
+      render :json => @republicans.to_json, :status => 200 
+    rescue Exception => e
+      puts e.message
+      render :nothing => true, :status => 500
+    end
+  end
+  def get10Tweets
+    begin
+      client = Mysql2::Client.new(:host => "localhost", :database => "TweetAnalysis_development", :username => "root", :password => "root")
+      @result = client.query("select keyword_id, text from tweets where keyword_id is not null  group by keyword_id, text limit 10;")
+      render :json => @result.to_json, :status => 200
     rescue Exception => e
       puts e.message
       render :nothing => true, :status => 500

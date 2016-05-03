@@ -63,6 +63,36 @@ $(document).on("click", "#refresh_tweets", function () {
 	});
 });
 
+$(document).on("click", "#get10", function () {
+
+	$.ajax({
+	    url: "tweet/get10Tweets?_ts="+(new Date().getTime()),
+	    type: 'GET',
+	    beforeSend: function( xhr ) {
+	    	$("#status").removeClass().addClass("label label-default");
+	    	$("#status").html("Loading 100");
+		},
+	    success: function(result) {
+	    	$("#tweets").html("");
+			
+			$("#tweets").append("<ul id='tweets-list' class='list-group'>");
+			for (var i = 0; i < result.length; i++) {
+				$("#tweets").append("<li class='list-group-item'>"+ result[i]["text"] +"</li>");
+			}
+			$("#tweets").append("</ul>");
+
+			$("#tweet-count").html(result.length);
+			$("#status").removeClass().addClass("label label-success");
+			$("#status").html("Success");
+		
+	    },
+	    failure: function(xhr) {
+	    	$("#status").removeClass().addClass("label label-danger");
+	    	$("#status").html("Failed");
+	    }
+	});
+});
+
 $(document).on("click", "#reset_db", function () {
 
 	$.ajax({
@@ -336,4 +366,68 @@ $(document).on("click", "#test", function() {
 $(document).on("click", "#flip", function() {
 	$("#chart").toggle();
 	$("#tabular-data").toggle();
+});
+
+var total_data = 0;
+var loadTableData = function () {
+
+	$.ajax({
+		url: "tweet/getDemocratsList?_ts="+(new Date().getTime()),
+		type: 'GET',
+		beforeSend: function( xhr ) {
+	    	$("#status").removeClass().addClass("label label-default");
+	    	$("#status").html("Loading Democrats Data");
+		},
+	    success: function(xhr) {
+
+	    	$("#democrat_count").html(xhr.length);
+
+	    	total_data += xhr.length;
+
+	    	$("#total_data").html(total_data);
+
+	    	for (var i = 0; i < xhr.length; i++) {
+	    		$("#democrats_data").append("<tr><td>"+ xhr[i]["screen_name"] +"</td></tr>");
+	    	}
+	    	
+		   	$("#status").removeClass().addClass("label label-success");
+			$("#status").html("Success");
+		},
+	    failure: function(xhr) {
+	    	$("#status").removeClass().addClass("label label-danger");
+	    	$("#status").html("Failed");
+	    }
+	});
+
+	$.ajax({
+		url: "tweet/getRepublicanList?_ts="+(new Date().getTime()),
+		type: 'GET',
+		beforeSend: function( xhr ) {
+	    	$("#status").removeClass().addClass("label label-default");
+	    	$("#status").html("Loading Republicans Data");
+		},
+	    success: function(xhr) {
+
+	    	$("#republican_count").html(xhr.length);
+
+	    	total_data += xhr.length;
+
+	    	$("#total_data").html(total_data);
+
+	    	for (var i = 0; i < xhr.length; i++) {
+	    		$("#republicans_data").append("<tr><td>"+ xhr[i]["screen_name"] +"</td></tr>");
+	    	}
+
+		   	$("#status").removeClass().addClass("label label-success");
+			$("#status").html("Success");
+		},
+	    failure: function(xhr) {
+	    	$("#status").removeClass().addClass("label label-danger");
+	    	$("#status").html("Failed");
+	    }
+	});
+}
+
+$(document).on("click", "#getTableData", function () {
+	loadTableData();
 });

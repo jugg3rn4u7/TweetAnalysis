@@ -15,6 +15,10 @@ Rails.application.routes.draw do
   get 'tweet/getDimensions' => 'tweet#getDimensions'
   get 'tweet/train_classifier' => 'tweet#train_classifier'
   post 'tweet/test_classifier' => 'tweet#test_classifier'
+
+  get 'tweet/getDemocratsList' => 'tweet#getDemocratsList'
+  get 'tweet/getRepublicanList' => 'tweet#getRepublicanList'
+  get 'tweet/get10Tweets' => 'tweet#get10Tweets'
   
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
