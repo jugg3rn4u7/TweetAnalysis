@@ -113,6 +113,8 @@ class TweetController < ApplicationController
         elsif tweet.political_affiliation == 2
            @@m.system.train_republican tweet.text
         end
+        tweet.attributes = { :mode => 1 }
+        tweet.save
       end  
       @@m.take_snapshot
       puts "Training Classifier Complete !"
@@ -138,7 +140,7 @@ class TweetController < ApplicationController
         party = 2
       end
       Tweet.create(text: dup_text, screen_name: latest_tweet.user.screen_name, 
-        score: score, sentiment: sentiment, user_id: latest_tweet.user.id, political_affiliation: party)
+        score: score, sentiment: sentiment, user_id: latest_tweet.user.id, political_affiliation: party, mode: '2')
       puts "screen_name : #{latest_tweet.user.screen_name} and party : #{party}"
     end
     puts "Testing Classifier Complete !"
