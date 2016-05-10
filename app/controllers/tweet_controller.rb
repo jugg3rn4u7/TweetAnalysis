@@ -245,6 +245,7 @@ class TweetController < ApplicationController
           party = 2
         end
         _id = record["id"]
+        #puts "update cross_validation set #{predicted_field} = '#{party}' where id = '#{_id}';"
         client.query("update cross_validation set #{predicted_field} = '#{party}' where id = '#{_id}';")
       end   
     rescue Exception => e
@@ -265,13 +266,15 @@ class TweetController < ApplicationController
     end  
   end
   def calculate_accuracy(fold)
-    table = Predict.all
-    record_count = table.length
+    client = Mysql2::Client.new(:host => "localhost", :database => "TweetAnalysis_development", :username => "root", :password => "root")
+    table = client.query("select * from cross_validation where mode = '2';")
+    record_count = 0
     accuracy_count = 0
     table.each do |record|
       if record["actual"].to_i == record["predicted#{fold}"].to_i
         accuracy_count += 1
       end
+      record_count += 1
     end
     accuracy = ( accuracy_count.to_f / record_count ) * 100
     return number_with_precision( accuracy , precision: 2)
