@@ -120,6 +120,12 @@ class TweetController < ApplicationController
            @@m.system.train_democratic tweet.text
         elsif tweet["predicted#{fold}"] == 2
            @@m.system.train_republican tweet.text
+        else
+          if tweet["actual"] == 1
+           @@m.system.train_democratic tweet.text
+          elsif tweet["actual"] == 2
+             @@m.system.train_republican tweet.text
+          end
         end
       end  
       @@m.take_snapshot
